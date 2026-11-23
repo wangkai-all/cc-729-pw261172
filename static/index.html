@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Datalog 数据加工仓</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <h1>📦 Datalog 数据加工仓</h1>
+  <div class="actions">
+    <select id="sample-select">
+      <option value="">载入样例…</option>
+      <option value="cyclic">① 循环图（递归终止）</option>
+      <option value="diamond">② 两条独立证明</option>
+      <option value="masking">③ 继承标签与屏蔽规则</option>
+    </select>
+    <button id="btn-compare" title="把当前草稿整版重算一遍，与增量维护的结果对比">增量 vs 整版重算</button>
+    <button id="btn-publish" class="primary">发布版本</button>
+    <button id="btn-reset" class="danger">清空草稿</button>
+  </div>
+</header>
+
+<div id="banner"></div>
+
+<main>
+  <!-- ================= 数据 ================= -->
+  <section class="panel" id="col-data">
+    <h2>① 输入数据（节点与直接关系）
+      <span class="hint">增删即时增量维护</span>
+    </h2>
+    <div class="toolbar-row">
+      <input id="add-pred" placeholder="谓词 edge" style="width:90px">
+      <input id="add-args" placeholder="参数 a, b" style="width:130px">
+      <button id="btn-add-fact" class="small primary">添加事实</button>
+    </div>
+    <details>
+      <summary class="hint">批量导入（每行一条事实，如 <span class="mono">edge(a, b).</span>）</summary>
+      <textarea id="import-text" rows="5" placeholder="node(a).&#10;edge(a, b)."></textarea>
+      <button id="btn-import" class="small">导入</button>
+    </details>
+    <div id="edb-tables"></div>
+  </section>
+
+  <!-- ================= 规则 ================= -->
+  <section class="panel" id="col-rules">
+    <h2>② 规则（Datalog 子集）
+      <span class="hint">正向递归 + 分层否定</span>
+    </h2>
+    <div class="tabs">
+      <button id="tab-text" class="active">文本录入</button>
+      <button id="tab-form">结构化表单</button>
+    </div>
+    <div id="rules-text-pane">
+      <textarea id="rules-text" rows="9" spellcheck="false"
+        placeholder="reach(X, Y) :- edge(X, Y).&#10;reach(X, Y) :- reach(X, Z), edge(Z, Y)."></textarea>
+      <div class="toolbar-row">
+        <button id="btn-save-rules" class="small primary">校验并应用</button>
+        <select id="bad-rule-demo">
+          <option value="">试试非法规则…</option>
+          <option value="negcycle">负向环（应被拒绝并显示循环路径）</option>
+          <option value="unsafe">无正向约束（应被拒绝）</option>
+        </select>
+      </div>
+    </div>
+    <div id="rules-form-pane" style="display:none">
+      <div id="form-rules"></div>
+      <div class="toolbar-row">
+        <button id="btn-form-add-rule" class="small">＋ 加一条规则</button>
+        <button id="btn-form-apply" class="small primary">由表单生成并应用</button>
+      </div>
+      <div class="hint">变量大写开头（X、Y），常量小写（a、vip）；勾选「非」表示否定文字。</div>
+    </div>
+    <div id="rules-error"></div>
+    <h3>分层（否定只能引用更低层已完成的关系）</h3>
+    <div id="strata"></div>
+  </section>
+
+  <!-- ================= 结果 ================= -->
+  <section class="panel" id="col-results">
+    <h2>③ 派生结果
+      <span class="hint" id="result-stats"></span>
+    </h2>
+    <div class="hint">点击任意一条结果可展开它的支持关系（证明）；增量/整版对比结果显示在此处。</div>
+    <div id="compare-out"></div>
+    <div id="result-tables"></div>
+  </section>
+</main>
+
+<section id="versions">
+  <section class="panel">
+    <h2>版本仓库 <span class="hint">输入与规则一起发布；发布失败保留上一版可查结果</span></h2>
+    <div id="version-list"><span class="hint">还没有已发布的版本。</span></div>
+  </section>
+</section>
+
+<div id="modal-root"></div>
+
+<footer>
+  规则语法：<span class="mono">head(X) :- body1(X), not body2(X).</span> ·
+  变量大写开头 · 常量小写/数字/引号字符串 · 注释用 % ·
+  不支持脚本、算术与函数符号；所有变量必须有正向约束。
+</footer>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
